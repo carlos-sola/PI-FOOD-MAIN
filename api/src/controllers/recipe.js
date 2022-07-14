@@ -48,8 +48,8 @@ const recipeController = {
 
             // si me llegó un name por query, filtro por name antes de devolver
             if (name){
-                   info = infoTotal.filter(p=>{
-                   infoTotal = p.name.toLowerCase().includes(name.toLowerCase())
+                   infoTotal = infoTotal.filter(p=>{
+                   return p.name.toLowerCase().includes(name.toLowerCase())
                 })
             }
             return res.send({ recipes: infoTotal});
