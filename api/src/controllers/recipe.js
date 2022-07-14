@@ -14,20 +14,31 @@ const recipeController = {
         try {
             const { name } = req.query;
             //PIDO INFO A LA DATABASE
-             const dbInfo = await Recipe.findAll({ include: Diet })
-            
+            let apiUrl;
+            let dbInfo;
+            let infoTotal
+            if(name){
+                apiUrl= await axios.get(`https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true&query=${name}`);
+                dbInfo = await Recipe.findAll({include:Diet});
+                dbInfo = dbInfo.filter(p=>{
+                          return p.name.toLowerCase().includes(name.toLowerCase()) })
+            }else{
+                apiUrl = await axios.get(`https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}&addRecipeInformation=true`);
+                dbInfo = await Recipe.findAll({ include: Diet })
+            }
             //PIDO INFO A LA API
-            const apiUrl = await axios.get(`https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}`);
-            //accedo al obj results, meto el array q contiene en la variable apiId
-            const apiId = apiUrl.data.results ;
-            // itero cada elemento del array realizando una peticion de axios por cada uno y guardando la data en arrayId 
-            //mapeo arrayId creando un objeto con los atributos del modelo Recipe
-            let arrayId =[];
-            for(let i = 0; i < apiId.length ;i++ ){
-                const recipe = await axios.get(`https://api.spoonacular.com/recipes/${apiId[i].id}/information?apiKey=${API_KEY}`);
-                arrayId.push(recipe.data);
-            };
-             const apiInfo = arrayId.map(e=>{
+
+            // const apiUrl = await axios.get(`https://api.spoonacular.com/recipes/complexSearch?apiKey=${API_KEY}`);
+            // //accedo al obj results, meto el array q contiene en la variable apiId
+            // const apiId = apiUrl.data.results ;
+            // // itero cada elemento del array realizando una peticion de axios por cada uno y guardando la data en arrayId 
+            // //mapeo arrayId creando un objeto con los atributos del modelo Recipe
+            // let arrayId =[];
+            // for(let i = 0; i < apiId.length ;i++ ){
+            //     const recipe = await axios.get(`https://api.spoonacular.com/recipes/${apiId[i].id}/information?apiKey=${API_KEY}`);
+            //     arrayId.push(recipe.data);
+            // }; 
+             const apiInfo = apiUrl.data.results.map(e=>{
                  return{
                      id: e.id,
                      name: e.title,
@@ -44,14 +55,15 @@ const recipeController = {
              });
     
             //CONCATENO LA INFO DE DATABASE Y DE LA API
-            let infoTotal = dbInfo.concat(apiInfo);
+            infoTotal = dbInfo.concat(apiInfo);
 
             // si me llegó un name por query, filtro por name antes de devolver
-            if (name){
-                   infoTotal = infoTotal.filter(p=>{
-                   return p.name.toLowerCase().includes(name.toLowerCase())
-                })
-            }
+
+            // if (name){
+            //        infoTotal = infoTotal.filter(p=>{
+            //        return p.name.toLowerCase().includes(name.toLowerCase())
+            //     })
+            // }
             return res.send({ recipes: infoTotal});
     
 
